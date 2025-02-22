@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Striker 4.0</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Pacifico&display=swap');
+
+        body {
+            font-family: 'Calibri', sans-serif;
+            background: linear-gradient(45deg, #f3e5f5, #e1bee7);
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(45deg, #ffffff, #f8f8f8);
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            font-size: 4rem;
+            font-family: 'Pacifico', cursive;
+            font-weight: bold;
+            color: #6a0dad;
+            margin-bottom: 20px;
+            animation: fadeIn 1s ease-in-out;
+        }
+        h2 {
+            color: #6a0dad;
+            margin-top: 20px;
+            text-align: center;
+            font-size: 2rem;
+            animation: fadeIn 1s ease-in-out;
+        }
+        input[type="text"], select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #fff;
+            color: #333;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+            font-size: 1rem;
+        }
+        button {
+            padding: 10px 20px;
+            background: linear-gradient(45deg, #b19cd9, #8a2be2);
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1rem;
+            transition: background-color 0.3s, transform 0.3s;
+            margin-right: 10px;
+        }
+        button:hover {
+            background: linear-gradient(45deg, #d8bfd8, #dda0dd);
+            transform: scale(1.05);
+        }
+        .result, .chat-container {
+            display: flex;
+            flex-direction: column;
+            margin-top: 20px;
+            padding: 20px;
+            background: linear-gradient(45deg, #e0f7fa, #b2ebf2);
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            animation: slideIn 0.5s ease-in-out;
+        }
+        .result h3, .chat-container h2 {
+            margin-top: 0;
+            color: #7e25bd;
+        }
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: 200px;
+            overflow-y: auto;
+            background-color: #eeeeee;
+            padding: 10px;
+            border-radius: 5px;
+            color: #333;
+            font-family: 'Calibri', sans-serif;
+            font-size: 0.9rem;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .chat-box {
+            height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 10px;
+            margin-bottom: 10px;
+            background-color: #eeeeee;
+            color: #333;
+            font-family: 'Calibri', sans-serif;
+            font-size: 0.9rem;
+        }
+        .chat-message {
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: #ffffff;
+            color: #333;
+            font-family: 'Calibri', sans-serif;
+        }
+        .chat-message.user {
+            text-align: right;
+        }
+        .chat-message.ai {
+            text-align: left;
+        }
+        .chat-message strong {
+            color: #6a0dad;
+        }
+        .button-group {
+            display: flex;
+            justify-content: space-between;
+        }
+        @media (min-width: 768px) {
+            .container {
+                flex-direction: row;
+                justify-content: space-between;
+            }
+            .result, .chat-container {
+                width: 49%;
+                margin-top: 0;
+            }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes slideIn {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="result">
+            <h1>Scrapify</h1>
+            <select id="modelSelect" onchange="selectModel()">
+                <option value="Gemma2 💎">Gemma2 💎</option>
+                <option value="Mixtral 🚀">Mixtral 🚀</option>
+            </select>
+            <input type="text" id="url" placeholder="Enter URL to scrape">
+            <div class="button-group">
+                <button onclick="scrape()">Scrape and Summarize</button>
+                <button onclick="reset()">Reset</button>
+            </div>
+            <br>
+            <h3>Scraped Text:</h3>
+            <pre id="scrapedText" class="output-box"></pre>
+            <br>
+            <h3>Summary:</h3>
+            <pre id="summary" class="output-box"></pre>
+        </div>
+
+        <div class="chat-container">
+            <h2>Chatbot</h2>
+            <div class="chat-box output-box" id="chatBox"></div>
+            <input type="text" id="chatInput" placeholder="Ask me anything...">
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script>
+        async function scrape() {
+            const url = document.getElementById('url').value;
+            const scrapedTextDiv = document.getElementById('scrapedText');
+            const summaryDiv = document.getElementById('summary');
+
+            if (!url) {
+                scrapedTextDiv.innerHTML = "Please enter a valid URL.";
+                summaryDiv.innerHTML = "";
+                return;
+            }
+
+            scrapedTextDiv.innerHTML = "Scraping...";
+            summaryDiv.innerHTML = "Summarizing...";
+
+            const response = await fetch('/scrape', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ url: url })
+            });
+
+            const data = await response.json();
+
+            if (data.error) {
+                scrapedTextDiv.innerHTML = `Error: ${data.error}`;
+                summaryDiv.innerHTML = "";
+            } else {
+                scrapedTextDiv.innerHTML = data.scraped_text;
+                summaryDiv.innerHTML = data.summary;
+                updateOutputBox(scrapedTextDiv);
+                updateOutputBox(summaryDiv);
+            }
+        }
+
+        async function sendMessage() {
+            const chatInput = document.getElementById('chatInput');
+            const chatBox = document.getElementById('chatBox');
+            const message = chatInput.value;
+
+            if (!message) return;
+
+            chatBox.innerHTML += `<div class="chat-message user"><strong>You:</strong> ${message}</div>`;
+            chatInput.value = "";
+
+            const scrapedText = document.getElementById('scrapedText').innerText;
+            const summary = document.getElementById('summary').innerText;
+            const context = `Scraped Text: ${scrapedText}\n\nSummary: ${summary}`;
+
+            const response = await fetch('/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ message: message, context: context })
+            });
+
+            const data = await response.json();
+
+            chatBox.innerHTML += `<div class="chat-message ai"><strong>AI:</strong> ${data.response}</div>`;
+            chatBox.scrollTop = chatBox.scrollHeight;
+            updateOutputBox(chatBox);
+        }
+
+        async function selectModel() {
+            const selectedModel = document.getElementById('modelSelect').value;
+            const response = await fetch('/select_model', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ model: selectedModel })
+            });
+            const data = await response.json();
+            alert(data.message);
+        }
+
+        function reset() {
+            document.getElementById('url').value = '';
+            document.getElementById('scrapedText').innerHTML = '';
+            document.getElementById('summary').innerHTML = '';
+            document.getElementById('chatBox').innerHTML = '';
+            document.getElementById('chatInput').value = '';
+            const outputBoxes = document.querySelectorAll('.output-box');
+            outputBoxes.forEach(box => {
+                box.style.backgroundColor = '#eeeeee';
+                box.style.color = '#333';
+            });
+        }
+
+        function updateOutputBox(element) {
+            element.style.backgroundColor = '#ffffff';
+            element.style.color = '#333';
+        }
+    </script>
+</body>
+</html>
